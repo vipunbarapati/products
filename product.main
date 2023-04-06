@@ -1,0 +1,95 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+public class CsvFileWriter {
+
+    public static void main(String[] args) {
+        String csvFilePath = "products.csv";
+        String[] headers = {"Product Name", "Product Price", "SKU", "Model Number", "Product Category", "Product Description"};
+        String[][] data = getProductsData();
+       
+        writeCsvFile(csvFilePath, headers, data);
+    }
+   
+    public static String[][] getProductsData() {
+        String[][] data = new String[10][6];
+        String url = "https://www.staples.com/Computer-office-desks/cat_CL210795/663ea?icid=BTS:2020:STUDYSPACE:DESKS";
+       
+        try {
+            Document doc = Jsoup.connect(url).get();
+            Elements products = doc.select("div#center-panel").select("div.sku-list")
+                    .select("div.sku-item").select("div.sku-info");
+           
+            int i = 0;
+            for (Element product : products) {
+                // Get product name
+                String name = product.select("div.sku-title").text();
+                data[i][0] = name;
+               
+                // Get product price
+                String price = product.select("div.price-section").select("span.price").text();
+                data[i][1] = price;
+               
+                // Get product SKU
+                String sku = product.select("div.item-number").text();
+                data[i][2] = sku;
+               
+                // Get product model number
+                String model = product.select("div.model-number").text();
+                data[i][3] = model;
+               
+                // Get product category
+                String category = product.select("div.sku-breadcrumb").text();
+                data[i][4] = category;
+               
+                // Get product description
+                String description = product.select("div.sku-description").text();
+                data[i][5] = description;
+               
+                i++;
+                if (i >= 10) {
+                    break;
+                }
+            }
+           
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+       
+        return data;
+    }
+   
+    public static void writeCsvFile(String filePath, String[] headers, String[][] data) {
+        try (FileWriter writer = new FileWriter(filePath)) {
+           
+            // Write headers to CSV file
+            for (int i = 0; i < headers.length; i++) {
+                writer.append(headers[i]);
+                if (i != headers.length - 1) {
+                    writer.append(",");
+                }
+            }
+            writer.append("\n");
+           
+            // Write data to CSV file
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    writer.append(data[i][j]);
+                    if (j != data[i].length - 1) {
+                        writer.append(",");
+                    }
+                }
+                writer.append("\n");
+            }
+           
+            System.out.println("CSV file created successfully at " + filePath);
+           
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
